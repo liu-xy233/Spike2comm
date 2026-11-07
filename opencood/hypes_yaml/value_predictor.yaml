@@ -1,0 +1,48 @@
+model:
+  enabled: true
+  in_channels: 256
+  embed_dim: 256
+  patch_size: [2, 3]
+  num_patch: 1050
+  transformer_layers: 2
+  transformer_heads: 4
+  transformer_ffn_dim: 256
+  meta_dim: 4
+  meta_hidden_dim: 128
+  meta_embed_dim: 64
+  coord_embed_dim: 64
+  use_coord_embedding: true
+  use_output_norm: true
+  value_hidden_dim: 128
+  dropout: 0.0
+
+training:
+  epochs: 20
+  batch_size: 4
+  lr: 0.0001
+  weight_decay: 0.0001
+  num_workers: 0
+  pin_memory: true
+  seed: 2026
+  device: cuda
+  checkpoint_dir: outputs/value_predictor_checkpoints
+
+loss:
+  lambda_rank: 1.0
+  margin: 0.1
+  pair_sampling: random
+  num_pairs: 256
+  topk: 32
+
+dataset:
+  feature_dir: outputs/value_predictor_features
+  utility_path: opencood/logs/dair_e3dsnn_multiscale_neck_formal_scratch_30ep_2026_09_22_10_29_49/oracle_k80_neck_late030_b055_rbv050_safe_full/dense_patch_utility.pt
+
+extraction:
+  detector_hypes: opencood/hypes_yaml/dair-v2x/dair_where2comm_attn_multiscale_e3dsnn_formal.yaml
+  checkpoint_dir: opencood/logs/dair_e3dsnn_multiscale_neck_formal_scratch_30ep_2026_09_22_10_29_49
+  eval_epoch: null
+  split: val
+  output_dir: outputs/value_predictor_features
+  num_workers: 0
+  device: cuda

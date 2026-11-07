@@ -1,0 +1,274 @@
+name: opv2v_e3dsnn_where2comm_ddp_bs4
+root_dir: /data/opv2v/train
+validate_dir: /data/opv2v/validate
+wild_setting:
+  seed: 20
+  async: false
+  async_mode: sim
+  async_overhead: 100
+  loc_err: false
+  xyz_std: 0.2
+  ryp_std: 0.2
+  data_size: 1.06
+  transmission_speed: 27
+  backbone_delay: 10
+yaml_parser: load_point_pillar_params
+train_params:
+  batch_size: 4
+  epoches: 50
+  eval_freq: 5
+  save_freq: 1
+  max_cav: 5
+  num_workers: 1
+  persistent_workers: false
+  prefetch_factor: 1
+  empty_cache_each_iter: false
+  train_num_workers: 1
+  val_num_workers: 0
+  train_persistent_workers: false
+  val_persistent_workers: false
+fusion:
+  core_method: IntermediateFusionDatasetOPV2VE3DSNN
+  args:
+    proj_first: false
+preprocess:
+  args:
+    encoding: mean
+    max_points_per_voxel: 32
+    max_voxel_test: 70000
+    max_voxel_train: 32000
+    num_point_features: 4
+    num_time_bins: 1
+    voxel_size:
+    - 0.2
+    - 0.2
+    - 0.1
+  cav_lidar_range:
+  - -140.8
+  - -38.4
+  - -3
+  - 140.8
+  - 38.4
+  - 1
+  core_method: E3DSNNVoxelPreprocessor
+data_augment:
+- NAME: random_world_flip
+  ALONG_AXIS_LIST:
+  - x
+- NAME: random_world_rotation
+  WORLD_ROT_ANGLE:
+  - -0.78539816
+  - 0.78539816
+- NAME: random_world_scaling
+  WORLD_SCALE_RANGE:
+  - 0.95
+  - 1.05
+postprocess:
+  anchor_args:
+    D: 40
+    H: 384
+    W: 1408
+    cav_lidar_range: &id001
+    - -140.8
+    - -38.4
+    - -3
+    - 140.8
+    - 38.4
+    - 1
+    feature_stride: 8
+    h: 1.56
+    l: 3.9
+    num: 2
+    r: &id002
+    - 0
+    - 90
+    vd: 0.1
+    vh: 0.2
+    vw: 0.2
+    w: 1.6
+  confidence_aware_late_fusion:
+    collaborator_score_weight: 0.55
+    enabled: true
+    score_threshold: 0.3
+  core_method: VoxelPostprocessor
+  gt_range:
+  - -140.8
+  - -38.4
+  - -3
+  - 140.8
+  - 38.4
+  - 1
+  max_num: 100
+  nms_thresh: 0.15
+  order: hwl
+  target_args:
+    neg_threshold: 0.45
+    pos_threshold: 0.6
+    score_threshold: 0.2
+model:
+  args:
+    anchor_number: 2
+    backbone_fix: false
+    base_bev_backbone:
+      bev_in_channels: 128
+      embed_channels: 16
+      enc_depth:
+      - 2
+      - 2
+      - 2
+      - 2
+      enc_num_ref:
+      - 16
+      - 16
+      - 16
+      - 16
+      groups:
+      - 4
+      - 4
+      - 8
+      - 16
+      layer_nums:
+      - 1
+      layer_strides:
+      - 1
+      multi_scale_enhancement:
+        alpha_init: 0.0
+        alpha_learnable: true
+        debug_shapes: false
+        enabled: true
+        interpolation_mode: nearest
+        neck_channels: 64
+      num_filters:
+      - 256
+      num_upsample_filter:
+      - 256
+      out_channels: 128
+      point_grid_size:
+      - - 8
+        - 12
+        - 16
+        - 16
+      - - 6
+        - 9
+        - 12
+        - 12
+      - - 4
+        - 6
+        - 8
+        - 8
+      - - 3
+        - 4
+        - 6
+        - 6
+      sparse_channels:
+      - 16
+      - 32
+      - 64
+      - 64
+      type: e3dsnn_sparse_spike
+      upsample_strides:
+      - 1
+    compression: 0
+    fusion_args:
+      agg_operator:
+        feature_dim: 256
+        mode: ATTEN
+      communication:
+        gaussian_smooth:
+          c_sigma: 1.0
+          k_size: 5
+        round: 1
+        thre: 0.05
+      downsample_rate: 8
+      dropout_rate: 0
+      in_channels: 256
+      layer_nums:
+      - 1
+      multi_scale: true
+      n_head: 8
+      num_filters:
+      - 256
+      only_attention: true
+      voxel_size:
+      - 0.2
+      - 0.2
+      - 0.1
+    grid_size:
+    - 1408
+    - 384
+    - 40
+    input_channels: 4
+    lidar_range:
+    - -140.8
+    - -38.4
+    - -3
+    - 140.8
+    - 38.4
+    - 1
+    max_cav: 5
+    point_pillar_scatter:
+      grid_size:
+      - 1408
+      - 384
+      - 40
+      num_features: 64
+    shrink_header:
+      dim:
+      - 256
+      input_dim: 256
+      kernal_size:
+      - 3
+      padding:
+      - 1
+      stride:
+      - 1
+    voxel_size:
+    - 0.2
+    - 0.2
+    - 0.1
+  core_method: point_pillar_where2comm_e3dsnn
+loss:
+  supervision_mode: cooperative_only
+  include_round_losses: false
+  args:
+    cls_weight: 1.0
+    reg: 2.0
+    anchor_args:
+      D: 40
+      H: 384
+      W: 1408
+      cav_lidar_range: *id001
+      feature_stride: 8
+      h: 1.56
+      l: 3.9
+      num: 2
+      r: *id002
+      vd: 0.1
+      vh: 0.2
+      vw: 0.2
+      w: 1.6
+    iou_quality_head:
+      enabled: true
+      loss_weight: 1.0
+      quality_power: 1.0
+      debug: false
+  core_method: point_pillar_loss
+optimizer:
+  args:
+    eps: 1.0e-10
+    weight_decay: 0.0001
+  core_method: Adam
+  lr: 0.002
+lr_scheduler:
+  core_method: multistep
+  gamma: 0.1
+  step_size:
+  - 10
+  - 20
+test_dir: /data/opv2v/test
+input_source:
+- lidar
+label_type: lidar
+comm_range: 70
+random_ego_train: true
+ego_selection_seed: 20

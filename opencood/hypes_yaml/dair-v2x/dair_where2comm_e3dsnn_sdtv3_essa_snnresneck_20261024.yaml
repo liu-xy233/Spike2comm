@@ -1,0 +1,259 @@
+cooperative_label_dir: /workspace/dair-v2x-coalign/cooperative-vehicle-infrastructure/cooperative/label_world
+data_augment:
+- ALONG_AXIS_LIST:
+  - x
+  NAME: random_world_flip
+- NAME: random_world_rotation
+  WORLD_ROT_ANGLE:
+  - -0.78539816
+  - 0.78539816
+- NAME: random_world_scaling
+  WORLD_SCALE_RANGE:
+  - 0.95
+  - 1.05
+data_dir: /workspace/dair-v2x-coalign/cooperative-vehicle-infrastructure
+fusion:
+  args:
+    clip_pc: false
+    proj_first: false
+  core_method: IntermediateFusionDatasetDAIRE3DSNN
+iou_quality_head:
+  enabled: true
+  loss_weight: 1.0
+  quality_power: 1.0
+  debug: false
+
+loss:
+  args:
+    cls_weight: 1.0
+    reg: 2.0
+  core_method: point_pillar_loss
+lr_scheduler:
+  core_method: multistep
+  gamma: 0.1
+  step_size:
+  - 10
+  - 20
+model:
+  args:
+    anchor_number: 2
+    backbone_fix: false
+    base_bev_backbone:
+      bev_in_channels: 128
+      embed_channels: 16
+      enc_depth:
+      - 2
+      - 2
+      - 2
+      - 2
+      enc_num_ref:
+      - 16
+      - 16
+      - 16
+      - 16
+      groups:
+      - 4
+      - 4
+      - 8
+      - 16
+      layer_nums: &id001
+      - 1
+      layer_strides:
+      - 1
+      multi_scale_enhancement:
+        alpha_init: 0.0
+        alpha_learnable: true
+        debug_shapes: false
+        enabled: true
+        interpolation_mode: nearest
+        neck_channels: 64
+      num_filters: &id002
+      - 256
+      num_upsample_filter:
+      - 256
+      out_channels: 128
+      point_grid_size:
+      - - 8
+        - 12
+        - 16
+        - 16
+      - - 6
+        - 9
+        - 12
+        - 12
+      - - 4
+        - 6
+        - 8
+        - 8
+      - - 3
+        - 4
+        - 6
+        - 6
+      sparse_channels:
+      - 16
+      - 32
+      - 64
+      - 64
+      type: e3dsnn_sparse_spike
+      upsample_strides:
+      - 1
+    compression: 0
+    fusion_args:
+      agg_operator:
+        mode: SDTV3_ESSA
+        feature_dim: 256
+        num_heads: 8
+        v_expansion: 4
+        spike_max: 4
+        spike_norm: 4
+      communication:
+        gaussian_smooth:
+          c_sigma: 1.0
+          k_size: 5
+        round: 1
+        thre: 0.05
+      downsample_rate: 8
+      dropout_rate: 0
+      in_channels: 256
+      layer_nums: *id001
+      multi_scale: true
+      n_head: 8
+      num_filters: *id002
+      only_attention: true
+      voxel_size: &id005
+      - 0.2
+      - 0.2
+      - 0.1
+    grid_size: !!python/object/apply:numpy.core.multiarray._reconstruct
+      args:
+      - &id003 !!python/name:numpy.ndarray ''
+      - !!python/tuple
+        - 0
+      - !!binary |
+        Yg==
+      state: !!python/tuple
+      - 1
+      - !!python/tuple
+        - 3
+      - &id004 !!python/object/apply:numpy.dtype
+        args:
+        - i8
+        - false
+        - true
+        state: !!python/tuple
+        - 3
+        - <
+        - null
+        - null
+        - null
+        - -1
+        - -1
+        - 0
+      - false
+      - !!binary |
+        8AMAAAAAAACQAQAAAAAAACgAAAAAAAAA
+    input_channels: 4
+    lidar_range: &id006
+    - -100.8
+    - -40
+    - -3
+    - 100.8
+    - 40
+    - 1
+    max_cav: 2
+    point_pillar_scatter:
+      grid_size: !!python/object/apply:numpy.core.multiarray._reconstruct
+        args:
+        - *id003
+        - !!python/tuple
+          - 0
+        - !!binary |
+          Yg==
+        state: !!python/tuple
+        - 1
+        - !!python/tuple
+          - 3
+        - *id004
+        - false
+        - !!binary |
+          8AMAAAAAAACQAQAAAAAAACgAAAAAAAAA
+      num_features: 64
+    shrink_header:
+      dim:
+      - 256
+      input_dim: 256
+      kernal_size:
+      - 3
+      padding:
+      - 1
+      stride:
+      - 1
+    voxel_size: *id005
+  core_method: point_pillar_where2comm_e3dsnn
+name: dair_e3dsnn_multiscale_neck_snnresidual_iou_quality_formal_strict_sdtv3_essa
+noise_setting:
+  add_noise: false
+  args:
+    pos_mean: 0
+    pos_std: 0.2
+    rot_mean: 0
+    rot_std: 0.2
+optimizer:
+  args:
+    eps: 1.0e-08
+    weight_decay: 0.0001
+  core_method: Adam
+  lr: 0.004
+postprocess:
+  anchor_args:
+    D: 40
+    H: 400
+    W: 1008
+    cav_lidar_range: *id006
+    feature_stride: 8
+    h: 1.56
+    l: 4.5
+    num: 2
+    r:
+    - 0
+    - 90
+    vd: 0.1
+    vh: 0.2
+    vw: 0.2
+    w: 2
+  confidence_aware_late_fusion:
+    collaborator_score_weight: 0.55
+    enabled: true
+    score_threshold: 0.30
+  core_method: VoxelPostprocessor
+  gt_range: *id006
+  max_num: 100
+  nms_thresh: 0.15
+  order: hwl
+  target_args:
+    neg_threshold: 0.45
+    pos_threshold: 0.6
+    score_threshold: 0.2
+preprocess:
+  args:
+    encoding: mean
+    max_points_per_voxel: 32
+    max_voxel_test: 70000
+    max_voxel_train: 32000
+    num_point_features: 4
+    num_time_bins: 1
+    voxel_size: *id005
+  cav_lidar_range: *id006
+  core_method: E3DSNNVoxelPreprocessor
+root_dir: /workspace/dair-v2x-coalign/cooperative-vehicle-infrastructure/train.json
+test_dir: /workspace/dair-v2x-coalign/cooperative-vehicle-infrastructure/val.json
+train_params:
+  batch_size: 4
+  epoches: 30
+  eval_freq: 1
+  max_cav: 2
+  num_workers: 0
+  save_freq: 1
+validate_dir: /workspace/dair-v2x-coalign/cooperative-vehicle-infrastructure/val.json
+vehicle_label_dir: /workspace/dair-v2x-coalign/cooperative-vehicle-infrastructure/vehicle-side/label/lidar
+yaml_parser: load_e3dsnn_where2comm_params

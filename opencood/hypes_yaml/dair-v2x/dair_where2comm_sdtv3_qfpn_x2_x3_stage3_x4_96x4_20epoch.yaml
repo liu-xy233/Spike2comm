@@ -1,0 +1,205 @@
+data_augment:
+- ALONG_AXIS_LIST:
+  - x
+  NAME: random_world_flip
+- NAME: random_world_rotation
+  WORLD_ROT_ANGLE:
+  - -0.78539816
+  - 0.78539816
+- NAME: random_world_scaling
+  WORLD_SCALE_RANGE:
+  - 0.95
+  - 1.05
+data_dir: /data/dair-v2x/cooperative-vehicle-infrastructure
+fusion:
+  args:
+    clip_pc: false
+    proj_first: false
+  core_method: IntermediateFusionDatasetDAIR
+loss:
+  args:
+    cls_weight: 1.0
+    reg: 2.0
+  core_method: point_pillar_loss
+lr_scheduler:
+  core_method: multistep
+  gamma: 0.1
+  step_size:
+  - 10
+  - 15
+model:
+  args:
+    anchor_number: 2
+    backbone_fix: false
+    base_bev_backbone:
+      T: 4
+      attn_drop_rate: 0
+      conv_depths:
+      - 2
+      - 2
+      drop_path_rate: 0
+      drop_rate: 0
+      embed_dims:
+      - 64
+      - 128
+      - 256
+      - 360
+      fpn:
+        in_channels:
+        - 64
+        - 128
+        - 256
+        - 360
+        input_features:
+        - x2
+        - x3
+        - stage3_out
+        - x4
+        out_channels: 96
+      mlp_ratio: 4
+      num_heads: 8
+      qkv_bias: false
+      sr_ratios: 1
+      transformer_depths:
+      - 6
+      - 2
+      type: full_sdtv3_qfpn_v2
+      stage1_mid_channels: 32
+    compression: 0
+    fusion_args:
+      agg_operator:
+        mode: ATTEN
+      backbone_mode: full_sdtv3_qfpn_v2
+      communication:
+        gaussian_smooth:
+          c_sigma: 1.0
+          k_size: 5
+        round: 1
+        thre: 0.05
+      downsample_rate: 1
+      multi_scale: true
+      num_filters:
+      - 64
+      - 128
+      - 256
+      - 360
+      num_levels: 4
+      voxel_size:
+      - 0.4
+      - 0.4
+      - 4
+    lidar_range:
+    - -100.8
+    - -40
+    - -3
+    - 100.8
+    - 40
+    - 1
+    max_cav: 2
+    pillar_vfe:
+      num_filters:
+      - 64
+      use_absolute_xyz: true
+      use_norm: true
+      with_distance: false
+    point_pillar_scatter:
+      grid_size:
+      - 504
+      - 200
+      - 1
+      num_features: 64
+    shrink_header:
+      dim:
+      - 256
+      input_dim: 384
+      kernal_size:
+      - 3
+      padding:
+      - 1
+      stride:
+      - 1
+    voxel_size:
+    - 0.4
+    - 0.4
+    - 4
+  core_method: point_pillar_where2comm_v2
+name: dair_where2comm_sdtv3_qfpn_x2_x3_stage3_x4_96x4_imagenet19m_bs4_20epoch
+noise_setting:
+  add_noise: false
+  args:
+    pos_mean: 0
+    pos_std: 0.2
+    rot_mean: 0
+    rot_std: 0.2
+optimizer:
+  args:
+    eps: 1.0e-08
+    weight_decay: 0.0001
+  core_method: Adam
+  lr: 0.0002
+postprocess:
+  anchor_args:
+    D: 1
+    H: 200
+    W: 504
+    cav_lidar_range:
+    - -100.8
+    - -40
+    - -3
+    - 100.8
+    - 40
+    - 1
+    feature_stride: 2
+    h: 1.56
+    l: 4.5
+    num: 2
+    r:
+    - 0
+    - 90
+    vd: 4
+    vh: 0.4
+    vw: 0.4
+    w: 2
+  core_method: VoxelPostprocessor
+  gt_range:
+  - -100.8
+  - -40
+  - -3
+  - 100.8
+  - 40
+  - 1
+  max_num: 100
+  nms_thresh: 0.15
+  order: hwl
+  target_args:
+    neg_threshold: 0.45
+    pos_threshold: 0.6
+    score_threshold: 0.2
+preprocess:
+  args:
+    max_points_per_voxel: 32
+    max_voxel_test: 70000
+    max_voxel_train: 32000
+    voxel_size:
+    - 0.4
+    - 0.4
+    - 4
+  cav_lidar_range:
+  - -100.8
+  - -40
+  - -3
+  - 100.8
+  - 40
+  - 1
+  core_method: SpVoxelPreprocessor
+root_dir: /data/dair-v2x/DAIR-V2X-C_Complemented_Anno/train.json
+test_dir: /data/dair-v2x/DAIR-V2X-C_Complemented_Anno/val.json
+train_params:
+  batch_size: 4
+  epoches: 20
+  eval_freq: 1
+  max_cav: 2
+  num_workers: 0
+  save_freq: 1
+validate_dir: /data/dair-v2x/DAIR-V2X-C_Complemented_Anno/val.json
+yaml_parser: load_point_pillar_params

@@ -1,0 +1,63 @@
+# Independent SFA ValueNet. Original value_predictor.yaml remains the ANN baseline.
+model:
+  architecture: sdtv3_snn
+  in_channels: 128
+  feature_size: [50, 126]
+  patch_size: [2, 3]
+  num_patch: 1050
+  embed_dim: 256
+  conv_blocks: 1
+  conv_mlp_ratio: 4
+  stem_kernel: 7
+  sep_expansion: 2
+  transformer_layers: 2
+  transformer_heads: 4
+  mlp_ratio: 4
+  v_expansion: 4
+  attention_impl: kv_first
+  qkv_bn_init: 0.5
+  spike_max: 4
+  spike_norm: 4.0
+  meta_dim: 4
+  meta_hidden_dim: 128
+  meta_embed_dim: 64
+  # dx/dy/distance in metres, yaw in radians. Calibrate on TRAIN data if changed.
+  metadata_scales: [100.8, 40.0, 3.141592653589793, 120.0]
+  coord_embed_dim: 64
+  use_coord_embedding: true
+  use_position_embedding: true
+  use_output_norm: false
+  value_hidden_dim: 128
+  collect_spike_stats: false
+  dropout: 0.0
+
+training:
+  epochs: 20
+  batch_size: 4
+  lr: 0.0001
+  weight_decay: 0.0001
+  grad_clip_norm: 1.0
+  num_workers: 0
+  pin_memory: true
+  seed: 2026
+  save_every: 1
+  device: cuda
+  checkpoint_dir: outputs/value_predictor_sdtv3_checkpoints
+
+loss:
+  lambda_rank: 1.0
+  margin: 0.02
+  topk: 10
+  hard_negative_k: 32
+
+# Set these to matching TRAIN features and ego-aligned labels of ONE frozen detector.
+dataset:
+  feature_dir: outputs/value_predictor_features_train
+  utility_path: outputs/oracle_train_ego_aligned.pt
+  require_valid_mask: true
+
+evaluation:
+  feature_dir: outputs/value_predictor_features_val
+  utility_path: outputs/oracle_val_ego_aligned.pt
+  # Communication replay derives coverage from pose, never from label values.
+  valid_mask_source: geometry
